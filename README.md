@@ -15,45 +15,56 @@ Claude Code ──stdio MCP──► zuga_docs_mcp.py ──HTTPS──► zugab
 2. A **docs token**: log in, open **Docs access**, click **Mint token**. Copy
    it once — it is shown only one time.
 
-## Install
+## Install — one command
+
+Clones, builds an isolated venv, installs deps, and registers with Claude Code
+with your token + the venv's python **baked into the registration** (so the
+server can't start tokenless — that's the `MCP error -32000` everyone hits).
+
+**Windows (PowerShell):**
+
+```powershell
+irm https://raw.githubusercontent.com/Zuga-luga/zuga-docs-mcp/main/install.ps1 | iex
+```
+
+**macOS / Linux:**
 
 ```bash
-git clone https://github.com/Zuga-luga/zuga-docs-mcp.git
-cd zuga-docs-mcp
+curl -fsSL https://raw.githubusercontent.com/Zuga-luga/zuga-docs-mcp/main/install.sh | bash
+```
 
+It prompts for your token once. To skip the prompt, pass it as the first arg
+(e.g. `./install.ps1 zdocs_xxx`) or set `$env:ZUGA_DOCS_TOKEN` first. Then
+**restart Claude Code** and ask it to run `list_docs`.
+
+<details>
+<summary>Manual install (if you'd rather wire it yourself)</summary>
+
+```bash
+git clone https://github.com/Zuga-luga/zuga-docs-mcp.git && cd zuga-docs-mcp
 python -m venv .venv
-# Linux/macOS:
-source .venv/bin/activate
-# Windows PowerShell:
-.venv\Scripts\activate
-
-pip install -r requirements.txt
+.venv/bin/python -m pip install -r requirements.txt   # Windows: .venv\Scripts\python.exe
 ```
 
-## Configure
-
-Set two environment variables (keep the token out of git — use your OS keychain
-or a local `.env`):
+Register, pointing `command` at the **venv's python** and putting the token in
+the `env` block (NOT a bare `python` and NOT relying on shell env — both cause
+-32000):
 
 ```bash
-export ZUGA_DOCS_URL=https://zugabot.ai     # only override if self-hosted
-export ZUGA_DOCS_TOKEN=<your minted token>
+claude mcp add zuga-docs \
+  -e ZUGA_DOCS_URL=https://zugabot.ai \
+  -e ZUGA_DOCS_TOKEN=<your token> \
+  -- /abs/path/zuga-docs-mcp/.venv/bin/python /abs/path/zuga-docs-mcp/zuga_docs_mcp.py
 ```
 
-## Register with Claude Code
-
-```bash
-claude mcp add zuga-docs -- python /absolute/path/to/zuga_docs_mcp.py
-```
-
-Or add to your `.mcp.json`:
+Or in `.mcp.json`:
 
 ```json
 {
   "mcpServers": {
     "zuga-docs": {
-      "command": "python",
-      "args": ["/absolute/path/to/zuga-docs-mcp/zuga_docs_mcp.py"],
+      "command": "/abs/path/zuga-docs-mcp/.venv/bin/python",
+      "args": ["/abs/path/zuga-docs-mcp/zuga_docs_mcp.py"],
       "env": {
         "ZUGA_DOCS_URL": "https://zugabot.ai",
         "ZUGA_DOCS_TOKEN": "your-token-here"
@@ -62,6 +73,7 @@ Or add to your `.mcp.json`:
   }
 }
 ```
+</details>
 
 ## Tools
 
